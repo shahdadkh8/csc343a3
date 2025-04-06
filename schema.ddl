@@ -131,23 +131,110 @@ CREATE TABLE session_participant (
 CREATE OR REPLACE FUNCTION check_facilitator_overlap()
 RETURNS TRIGGER AS $$
 DECLARE
-    new_date DATE;
+    new_date  DATE;
     new_start TIMESTAMP;
-    new_end TIMESTAMP;
+    new_end   TIMESTAMP;
 BEGIN
     SELECT e.event_date, es.start_ts, es.end_ts
-      INTO new_date,new_start,new_end
-      FROM event e JOIN event_series es ON es.series_id=e.series_id
-     WHERE e.eid=NEW.event;
+      INTO new_date, new_start, new_end
+      FROM event e JOIN event_series es ON es.series_id = e.series_id
+     WHERE e.eid = NEW.event;
 
+    /* Already facilitating overlapping session */
     IF EXISTS (
         SELECT 1
           FROM game_session gs
-          JOIN event e ON e.eid=gs.event
-          JOIN event_series es ON es.series_id=e.series_id
-         WHERE gs.facilitator=NEW.facilitator
-           AND gs.sid<>COALESCE(NEW.sid,-1)
-           AND e.event_date=new_date
-           AND new_start<es.end_ts AND es.start_ts<new_end
+          JOIN event e ON e.eid = gs.event
+          JOIN event_series es ON es.series_id = e.series_id
+         WHERE gs.facilitator = NEW.facilitator
+           AND gs.sid <> COALESCE(NEW.sid,-1)
+           AND e.event_date = new_date
+           AND new_start < es.end_ts
+           AND es.start_ts < new_end
     ) THEN
-        RAISE EXCEPTION 'Exec % is already facilitating an overlapping session',NEW.fac
+        RAISE EXCEPTION
+          'Exec % is already facilitating an overlapping session',
+          NEW.facilitator;
+    END IF;
+
+    /* Facilitator playing in another overlapping session */
+    IF EXISTS (
+        SELECT 1
+          FROM session_participant sp
+          JOIN game_session gs ON gs.sid = sp.session
+          JOIN event e ON e.eid = gs.event
+          JOIN event_series es ON es.series_id = e.series_id
+         WHERE sp.participant = NEW.facilitator
+           AND gs.sid <> COALESCE(NEW.sid,-1)
+           AND e.event_date = new_date
+           AND new_start < es.end_ts
+           AND es.start_ts < new_end
+    ) THEN
+        RAISE EXCEPTION
+          'Exec % is playing in another overlapping session',
+          NEW.facilitator;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_facilitator_overlap
+    BEFORE INSERT OR UPDATE ON game_session
+    FOR EACH ROW EXECUTE FUNCTION check_facilitator_overlap();
+
+/* Prevent member overlaps and member facilitating elsewhere */
+CREATE OR REPLACE FUNCTION check_participant_overlap()
+RETURNS TRIGGER AS $$
+DECLARE
+    new_date  DATE;
+    new_start TIMESTAMP;
+    new_end   TIMESTAMP;
+BEGIN
+    SELECT e.event_date, es.start_ts, es.end_ts
+      INTO new_date, new_start, new_end
+      FROM game_session gs
+      JOIN event e        ON e.eid = gs.event
+      JOIN event_series es ON es.series_id = e.series_id
+     WHERE gs.sid = NEW.session;
+
+    /* Member already playing another overlapping session */
+    IF EXISTS (
+        SELECT 1
+          FROM session_participant sp
+          JOIN game_session gs ON gs.sid = sp.session
+          JOIN event e ON e.eid = gs.event
+          JOIN event_series es ON es.series_id = e.series_id
+         WHERE sp.participant = NEW.participant
+           AND gs.sid <> NEW.session
+           AND e.event_date = new_date
+           AND new_start < es.end_ts
+           AND es.start_ts < new_end
+    ) THEN
+        RAISE EXCEPTION
+          'Member % is already playing an overlapping session',
+          NEW.participant;
+    END IF;
+
+    /* Member is facilitating another overlapping session */
+    IF EXISTS (
+        SELECT 1
+          FROM game_session gs
+          JOIN event e ON e.eid = gs.event
+          JOIN event_series es ON es.series_id = e.series_id
+         WHERE gs.facilitator = NEW.participant
+           AND gs.sid <> NEW.session
+           AND e.event_date = new_date
+           AND new_start < es.end_ts
+           AND es.start_ts < new_end
+    ) THEN
+        RAISE EXCEPTION
+          'Member % is facilitating an overlapping session',
+          NEW.participant;
+    END IF;
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER trg_participant_overlap
+    BEFORE INSERT OR UPDATE ON session_participant
+    FOR EACH ROW EXECUTE FUNCTION check_participant_overlap();

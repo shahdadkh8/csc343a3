@@ -83,7 +83,7 @@ CREATE TABLE event_committee (
 DROP TABLE IF EXISTS committee_member CASCADE;
 CREATE TABLE committee_member (
     committee_id INT NOT NULL REFERENCES event_committee(committee_id),
-    exec_member_id   INTNOT NULL REFERENCES exec_member(mid),
+    exec_member_id   INT NOT NULL REFERENCES exec_member(mid),
     is_lead BOOLEAN NOT NULL DEFAULT FALSE,
     PRIMARY KEY (committee_id, exec_member_id)
 );
@@ -107,5 +107,5 @@ DROP TABLE IF EXISTS session_participant CASCADE;
 CREATE TABLE session_participant (
     session INT NOT NULL REFERENCES game_session(sid),
     participant INT NOT NULL REFERENCES member(mid),
-    PRIMARY KEY (sid, mid)
+    PRIMARY KEY (session, participant)
 );

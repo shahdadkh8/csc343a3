@@ -25,7 +25,7 @@ CREATE TYPE level_of_study_enum AS ENUM (
     'Undergraduate','Graduate','Alumni'
 );
 CREATE TYPE game_category_enum AS ENUM (
-    'Strategy','Party','Deck‑building','Role‑playing','Social‑deduction'
+    'Strategy','Party','Deck‑building','Role‑playing','Social-deduction'
 );
 CREATE TYPE game_condition_enum AS ENUM (
     'New','Lightly‑used','Worn','Incomplete','Damaged'
@@ -75,8 +75,8 @@ DROP TABLE IF EXISTS event_series CASCADE;
 CREATE TABLE event_series (
     series_id INT PRIMARY KEY,
     name VARCHAR(120) NOT NULL UNIQUE,
-    start_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    end_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    start_ts TIME NOT NULL,
+    end_ts TIME NOT NULL,
     CHECK (end_ts > start_ts)
 );
 
@@ -132,8 +132,8 @@ CREATE OR REPLACE FUNCTION check_facilitator_overlap()
 RETURNS TRIGGER AS $$
 DECLARE
     new_date  DATE;
-    new_start TIMESTAMP;
-    new_end   TIMESTAMP;
+    new_start TIME;
+    new_end   TIME;
 BEGIN
     SELECT e.event_date, es.start_ts, es.end_ts
       INTO new_date, new_start, new_end
@@ -187,8 +187,8 @@ CREATE OR REPLACE FUNCTION check_participant_overlap()
 RETURNS TRIGGER AS $$
 DECLARE
     new_date  DATE;
-    new_start TIMESTAMP;
-    new_end   TIMESTAMP;
+    new_start TIME;
+    new_end   TIME;
 BEGIN
     SELECT e.event_date, es.start_ts, es.end_ts
       INTO new_date, new_start, new_end

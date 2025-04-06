@@ -54,7 +54,7 @@ INSERT INTO game_copy(cid,gid,acquisition_date,condition) VALUES
 /* ---------- EVENT SERIES -------------------------------------- */
 INSERT INTO event_series(series_id,name,start_ts,end_ts) VALUES
  (1,'Weekly Boardgame',   '18:00','22:00'),
- (2,'Basement Clocktower','22:00','02:00'),
+ (2,'Basement Clocktower','22:00','23:59'),
  (3,'Outdoor Social',     '12:00','16:00');
 
 /* ---------- EVENT OCCURRENCES --------------------------------- */

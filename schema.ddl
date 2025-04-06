@@ -61,15 +61,22 @@ CREATE TABLE game_copy (
     condition game_condition_enum NOT NULL
 );
 
+/*------------------  EVENT_SERIES  -----------------------------------*/
+DROP TABLE IF EXISTS event_series CASCADE;
+CREATE TABLE event_series (
+    series_id INT PRIMARY KEY,
+    name VARCHAR(120) NOT NULL,
+    start_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    end_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+    CHECK (end_ts > start_ts)
+);
+
 /*------------------  EVENT  ------------------------------------------*/
 DROP TABLE IF EXISTS event CASCADE;
 CREATE TABLE event (
     eid INT PRIMARY KEY,
-    name VARCHAR(120) NOT NULL,
-    location VARCHAR(120) NOT NULL,
-    start_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    end_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-    CHECK (end_ts > start_ts)
+    series_id INT NOT NULL REFERENCES event_series(series_id),
+    location VARCHAR(120) NOT NULL
 );
 
 /*------------------  EVENT_COMMITTEE  --------------------------------*/

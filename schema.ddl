@@ -1,27 +1,35 @@
 /*======================================================================
-  Gotta Love Games Database
-  Authors: Shahdad Khakpoor, Jana Van Heeswyk
-  ======================================================================*/
-DROP SCHEMA IF EXISTS GLG CASCADE;
-CREATE SCHEMA GLG;
-SET SEARCH_PATH TO GLG;
+  Gotta Love Games Database  –  schema.ddl  (Assignment 3)
+  Authors: Shahdad Khakpoor, Jana Van Heeswyk
+  ----------------------------------------------------------------------
+  Could not :  none
+  Did not   :  none
+  Extra constraints :
+      • board_game.release_year must be between 1900 and the current year
+      • exactly one lead exec per committee (partial UNIQUE index)
+  Assumptions :
+      • one organising committee per event series, shared by all its
+        occurrences
+      • each occurrence has a single calendar date; all occurrences of a
+        series share the same start/end time window
+======================================================================*/
+DROP SCHEMA IF EXISTS A3GLG CASCADE;
+CREATE SCHEMA A3GLG;
+SET SEARCH_PATH TO A3GLG;
 
 DROP TYPE IF EXISTS level_of_study_enum      CASCADE;
 DROP TYPE IF EXISTS game_category_enum       CASCADE;
 DROP TYPE IF EXISTS game_condition_enum      CASCADE;
 
 CREATE TYPE level_of_study_enum AS ENUM (
-    'Undergraduate', 'Graduate', 'Alumni'
+    'Undergraduate','Graduate','Alumni'
 );
-
 CREATE TYPE game_category_enum AS ENUM (
-    'Strategy', 'Party', 'Deck‑building', 'Role‑playing', 'Social‑deduction'
+    'Strategy','Party','Deck‑building','Role‑playing','Social‑deduction'
 );
-
 CREATE TYPE game_condition_enum AS ENUM (
-    'New', 'Lightly‑used', 'Worn', 'Incomplete', 'Damaged'
+    'New','Lightly‑used','Worn','Incomplete','Damaged'
 );
-
 
 /*------------------  MEMBER  -----------------------------------------*/
 DROP TABLE IF EXISTS member CASCADE;
@@ -32,7 +40,7 @@ CREATE TABLE member (
     los level_of_study_enum NOT NULL
 );
 
-/*------------------  EXEC_MEMBER  (subtype of MEMBER)  ---------------*/
+/*------------------  EXEC_MEMBER  ------------------------------------*/
 DROP TABLE IF EXISTS exec_member CASCADE;
 CREATE TABLE exec_member (
     mid INT PRIMARY KEY REFERENCES member(mid),
@@ -46,10 +54,11 @@ CREATE TABLE board_game (
     gid INT PRIMARY KEY,
     title VARCHAR(100) NOT NULL,
     category game_category_enum NOT NULL,
-    min_players INT NOT NULL CHECK (min_players >= 1),
-    max_players INT NOT NULL CHECK (max_players >= min_players),
+    min_players INT NOT NULL CHECK (min_players>=1),
+    max_players INT NOT NULL CHECK (max_players>=min_players),
     publisher VARCHAR(100),
-    release_year INT
+    release_year INT CHECK (release_year BETWEEN 1900
+                            AND EXTRACT(YEAR FROM CURRENT_DATE))
 );
 
 /*------------------  GAME_COPY  --------------------------------------*/
@@ -65,7 +74,7 @@ CREATE TABLE game_copy (
 DROP TABLE IF EXISTS event_series CASCADE;
 CREATE TABLE event_series (
     series_id INT PRIMARY KEY,
-    name VARCHAR(120) NOT NULL,
+    name VARCHAR(120) NOT NULL UNIQUE,
     start_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     end_ts TIMESTAMP WITHOUT TIME ZONE NOT NULL,
     CHECK (end_ts > start_ts)
@@ -76,6 +85,7 @@ DROP TABLE IF EXISTS event CASCADE;
 CREATE TABLE event (
     eid INT PRIMARY KEY,
     series_id INT NOT NULL REFERENCES event_series(series_id),
+    event_date DATE NOT NULL,
     location VARCHAR(120) NOT NULL
 );
 
@@ -83,19 +93,18 @@ CREATE TABLE event (
 DROP TABLE IF EXISTS event_committee CASCADE;
 CREATE TABLE event_committee (
     committee_id INT PRIMARY KEY,
-    event_series_name VARCHAR(120)
+    event_series_name VARCHAR(120) NOT NULL
+        REFERENCES event_series(name)
 );
 
 /*------------------  COMMITTEE_MEMBER  -------------------------------*/
 DROP TABLE IF EXISTS committee_member CASCADE;
 CREATE TABLE committee_member (
     committee_id INT NOT NULL REFERENCES event_committee(committee_id),
-    exec_member_id   INT NOT NULL REFERENCES exec_member(mid),
+    exec_member_id INT NOT NULL REFERENCES exec_member(mid),
     is_lead BOOLEAN NOT NULL DEFAULT FALSE,
-    PRIMARY KEY (committee_id, exec_member_id)
+    PRIMARY KEY (committee_id,exec_member_id)
 );
-
-/*  Ensure exactly one lead per committee  */
 CREATE UNIQUE INDEX committee_one_lead
         ON committee_member(committee_id)
      WHERE is_lead;
@@ -114,5 +123,31 @@ DROP TABLE IF EXISTS session_participant CASCADE;
 CREATE TABLE session_participant (
     session INT NOT NULL REFERENCES game_session(sid),
     participant INT NOT NULL REFERENCES member(mid),
-    PRIMARY KEY (session, participant)
+    PRIMARY KEY (session,participant)
 );
+
+/*------------------  TRIGGERS  ---------------------------------------*/
+/* Prevent facilitator overlaps and facilitator playing elsewhere */
+CREATE OR REPLACE FUNCTION check_facilitator_overlap()
+RETURNS TRIGGER AS $$
+DECLARE
+    new_date DATE;
+    new_start TIMESTAMP;
+    new_end TIMESTAMP;
+BEGIN
+    SELECT e.event_date, es.start_ts, es.end_ts
+      INTO new_date,new_start,new_end
+      FROM event e JOIN event_series es ON es.series_id=e.series_id
+     WHERE e.eid=NEW.event;
+
+    IF EXISTS (
+        SELECT 1
+          FROM game_session gs
+          JOIN event e ON e.eid=gs.event
+          JOIN event_series es ON es.series_id=e.series_id
+         WHERE gs.facilitator=NEW.facilitator
+           AND gs.sid<>COALESCE(NEW.sid,-1)
+           AND e.event_date=new_date
+           AND new_start<es.end_ts AND es.start_ts<new_end
+    ) THEN
+        RAISE EXCEPTION 'Exec % is already facilitating an overlapping session',NEW.fac

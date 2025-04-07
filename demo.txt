@@ -1,0 +1,129 @@
+/* ---------- Output of q1-q5 by Shahdad and Jana ---------- */
+
+csc343h-vanheesw=> \i runner.txt
+-------------------- Loading schema and data: --------------------
+
+psql:schema.ddl:16: NOTICE:  drop cascades to 15 other objects
+DETAIL:  drop cascades to type level_of_study_enum
+drop cascades to type game_category_enum
+drop cascades to type game_condition_enum
+drop cascades to table member
+drop cascades to table exec_member
+drop cascades to table board_game
+drop cascades to table game_copy
+drop cascades to table event_series
+drop cascades to table event
+drop cascades to table event_committee
+drop cascades to table committee_member
+drop cascades to table game_session
+drop cascades to table session_participant
+drop cascades to function check_facilitator_overlap()
+drop cascades to function check_participant_overlap()
+DROP SCHEMA
+CREATE SCHEMA
+SET
+psql:schema.ddl:20: NOTICE:  type "level_of_study_enum" does not exist, skipping
+DROP TYPE
+psql:schema.ddl:21: NOTICE:  type "game_category_enum" does not exist, skipping
+DROP TYPE
+psql:schema.ddl:22: NOTICE:  type "game_condition_enum" does not exist, skipping
+DROP TYPE
+CREATE TYPE
+CREATE TYPE
+CREATE TYPE
+psql:schema.ddl:35: NOTICE:  table "member" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:44: NOTICE:  table "exec_member" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:52: NOTICE:  table "board_game" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:65: NOTICE:  table "game_copy" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:74: NOTICE:  table "event_series" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:84: NOTICE:  table "event" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:93: NOTICE:  table "event_committee" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:101: NOTICE:  table "committee_member" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+CREATE INDEX
+psql:schema.ddl:113: NOTICE:  table "game_session" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+psql:schema.ddl:122: NOTICE:  table "session_participant" does not exist, skipping
+DROP TABLE
+CREATE TABLE
+CREATE FUNCTION
+CREATE TRIGGER
+CREATE FUNCTION
+CREATE TRIGGER
+INSERT 0 16
+INSERT 0 4
+INSERT 0 6
+INSERT 0 8
+INSERT 0 3
+INSERT 0 5
+INSERT 0 3
+INSERT 0 4
+INSERT 0 7
+INSERT 0 7
+INSERT 0 14
+INSERT 0 12
+
+-------------------- Query 1: -----------------------------------
+
+ event_id | event_date |   location    | participation_pct
+----------+------------+---------------+-------------------
+      101 | 2025-03-05 | Bahen 1230    |             43.75
+      201 | 2025-03-05 | Club Basement |             37.50
+      102 | 2025-03-12 | Bahen 1230    |             87.50
+      202 | 2025-03-12 | Club Basement |             37.50
+(4 rows)
+
+
+-------------------- Query 2: -----------------------------------
+
+ gid |          title          | times_played
+-----+-------------------------+--------------
+   6 | 7 Wonders               |            2
+   1 | Blood on the Clocktower |            2
+   5 | Avalon                  |            1
+   3 | Cascadia                |            1
+   2 | Turing Machine          |            1
+   4 | Cryptid                 |            0
+(6 rows)
+
+
+-------------------- Query 3: -----------------------------------
+
+          title          | exec_name | sessions_led
+-------------------------+-----------+--------------
+ Blood on the Clocktower | Zach      |            2
+(1 row)
+
+
+-------------------- Query 4: -----------------------------------
+
+ mid |  name  | session_count
+-----+--------+---------------
+   6 | Tawfiq |             4
+(1 row)
+
+-------------------- Query 5: -----------------------------------
+
+ eid | event_date |   location    |  avg_participants
+-----+------------+---------------+--------------------
+ 101 | 2025-03-05 | Bahen 1230    | 3.5000000000000000
+ 102 | 2025-03-12 | Bahen 1230    | 4.6666666666666667
+ 201 | 2025-03-05 | Club Basement | 6.0000000000000000
+ 202 | 2025-03-12 | Club Basement | 6.0000000000000000
+(4 rows)

@@ -1,5 +1,3 @@
-/* ---------- Output of q1-q5 by Shahdad and Jana ---------- */
-
 csc343h-vanheesw=> \i runner.txt
 -------------------- Loading schema and data: --------------------
 
@@ -126,4 +124,5 @@ INSERT 0 12
  102 | 2025-03-12 | Bahen 1230    | 4.6666666666666667
  201 | 2025-03-05 | Club Basement | 6.0000000000000000
  202 | 2025-03-12 | Club Basement | 6.0000000000000000
-(4 rows)
+ 301 | 2024-12-20 | Front Campus  |
+(5 rows)

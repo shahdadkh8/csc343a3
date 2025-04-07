@@ -3,7 +3,9 @@
   Authors: Shahdad Khakpoor, Jana Van Heeswyk
   ----------------------------------------------------------------------
   Could not :  none
-  Did not   :  none
+  Did not   :  We did not enforce the rule that game copies marked as 'Damaged' cannot be
+      scheduled in game_session.
+    
   Extra constraints :
       • board_game.release_year must be between 1900 and the current year
       • exactly one lead exec per committee (partial UNIQUE index)
